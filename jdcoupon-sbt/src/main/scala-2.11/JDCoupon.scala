@@ -19,7 +19,7 @@ object JDCoupon {
     val skuidRegexp ="""(?<=skuid: )(\d+)""".r
     val venderRegexp ="""(?<=venderId:)(\d+)""".r
 
-    val area: String = "10_698_45817"
+    val area: String = "10_698_45817"   // haerbin 
 
     val showState = true
 
@@ -50,6 +50,9 @@ object JDCoupon {
 
     }
 
+    /**
+      * @param url match url like http://search.jd.com/Search?coupon_batch=31680954&coupon_id=5116305736
+      */
     def showCouponProductList(url: String): Unit = {
         val couponProductListUrl = url match {
             case u: String if u.startsWith("search.jd.com/Search") || u.startsWith("http://search.jd.com/Search") =>
@@ -79,7 +82,7 @@ object JDCoupon {
             page += 1
             s += 30
 
-            maxNum = Integer.parseInt(totalRegexp.findFirstIn(upperPageContent).getOrElse("0"))
+            maxNum = totalRegexp.findFirstIn(upperPageContent).getOrElse("0").toInt
 
         } while (s < maxNum)
 
@@ -87,8 +90,11 @@ object JDCoupon {
 
     }
 
+    /**
+      * @param url match url like http://coudan.jd.com/coudan.html?188778961
+      */
     def showCoudanProductList(url: String): Unit = {
-        //http://coudan.jd.com/coudan.html?188778961
+
         val key = url.substring(url.indexOf('?') + 1)
         val callback = "jQuery4593390"
         val allProductList = ArrayBuffer[Map[String, String]]()
@@ -140,30 +146,30 @@ object JDCoupon {
     def showShareProductList(files: Array[String]): Unit = {
 
         files.map(Source.fromFile(_, "GBK").getLines().filter(_.size > 5).map(_.split("\\s"))
-                .map(x => (x(0), x.toList)).toMap).reduce((x, y) => x.filterKeys(y.contains(_)))
-                .map(x => (x._1, x._2 ::: List(getState(s"http://item.jd.com/${x._1}.html")))).values
-                .foreach(x => println(x.mkString("\t")))
+            .map(x => (x(0), x.toList)).toMap).reduce((x, y) => x.filterKeys(y.contains(_)))
+            .map(x => (x._1, x._2 :+ getState(s"http://item.jd.com/${x._1}.html"))).values
+            .foreach(x => println(x.mkString("\t")))
     }
 
     def addStockInfo(file: String): Unit = {
         Source.fromFile(file).getLines().map(_.split("\\s").toList)
-                .map(x => x ::: List(getState(s"http://item.jd.com/${x(0)}.html")))
-                .foreach(x => println(x.mkString("\t")))
+            .map(x => x :+ getState(s"http://item.jd.com/${x(0)}.html"))
+            .foreach(x => println(x.mkString("\t")))
     }
 
 
     def main(args: Array[String]) {
         begin(args)
 
-        //val url="http://item.jd.com/2113506.html"
-        //Source.fromURL(url,"GBK").getLines().take(100).foreach(println _)
-
     }
 
     def showHelp(): Unit = {
         println(
             """
-              |usage: analyze url
+              |usage:
+              |    analyze url
+              |    share file1 file2
+              |    stock file1
             """.stripMargin)
     }
 
